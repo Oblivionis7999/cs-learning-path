@@ -1,0 +1,162 @@
+<!-- CS·PATH 云同步模块(仅 --sync 构建的服务端版本注入) -->
+<style>
+.csy-chip{
+  display:inline-flex;align-items:center;gap:7px;font:700 .64rem/1 var(--mono);
+  letter-spacing:.12em;color:var(--blue-d);background:none;border:0;cursor:pointer;
+  padding:7px 0;text-align:left;
+}
+.csy-chip:hover{color:var(--blue)}
+.csy-chip.tb{margin-right:auto;color:var(--ink)}
+.csy-modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(16,16,20,.45)}
+.csy-modal.open{display:flex}
+.csy-box{
+  width:min(92vw,360px);background:var(--paper);border:1.5px solid var(--ink);
+  box-shadow:10px 10px 0 rgba(16,16,20,.85);padding:26px 24px;position:relative;
+}
+.csy-box h3{font:900 1.2rem/1.4 var(--zhs);margin:0 0 2px}
+.csy-box .csy-en{font:500 .6rem/1 var(--mono);letter-spacing:.3em;color:var(--g1);margin:0 0 18px}
+.csy-box input{
+  width:100%;border:1.5px solid var(--ink);background:#fff;padding:11px 12px;
+  font:500 .9rem var(--mono);margin:0 0 12px;outline:none;box-sizing:border-box;
+}
+.csy-box input:focus{border-color:var(--blue);box-shadow:3px 3px 0 rgba(29,51,255,.35)}
+.csy-row{display:flex;gap:10px}
+.csy-btn{
+  flex:1;background:var(--ink);color:var(--paper);border:0;padding:13px 0;
+  font:700 .72rem var(--mono);letter-spacing:.18em;cursor:pointer;transition:background .25s;
+}
+.csy-btn:hover{background:var(--blue)}
+.csy-btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--ink)}
+.csy-btn.ghost:hover{border-color:var(--blue);color:var(--blue);background:none}
+.csy-msg{min-height:1.4em;font:500 .66rem/1.5 var(--mono);color:var(--red);margin:10px 0 0;word-break:break-all}
+.csy-close{position:absolute;top:8px;right:10px;border:0;background:none;font:700 1rem var(--mono);cursor:pointer;color:var(--g1)}
+@media (max-width:720px){
+  .csy-chip.tb span.csy-hint{display:none}
+}
+</style>
+<div class="csy-modal" id="csyModal">
+  <div class="csy-box">
+    <button class="csy-close" id="csyX" aria-label="关闭">✕</button>
+    <h3>云同步</h3>
+    <p class="csy-en">CLOUD SYNC</p>
+    <input id="csyUser" placeholder="用户名(3-24 位)" maxlength="24" autocomplete="username">
+    <input id="csyPass" type="password" placeholder="密码(至少 8 位)" maxlength="72" autocomplete="current-password">
+    <div class="csy-row">
+      <button class="csy-btn" id="csyLogin">登录</button>
+      <button class="csy-btn ghost" id="csyReg">注册并登录</button>
+    </div>
+    <p class="csy-msg" id="csyMsg"></p>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+function $(id){return document.getElementById(id)}
+var modal=$("csyModal"),msg=$("csyMsg");
+var token=localStorage.getItem("cs-token")||"";
+var user=localStorage.getItem("cs-user")||"";
+var tsMap={};try{tsMap=JSON.parse(localStorage.getItem("cs-ts")||"{}")}catch(e){}
+var pend={},pendTimer=null,syncing=false;
+
+function fmt(ts){var d=new Date(ts);return("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+
+/* ---- 状态入口:桌面侧栏 + 移动顶栏各一个 ---- */
+function chip(){
+  document.querySelectorAll(".csy-chip").forEach(function(x){x.remove()});
+  var mk=function(){
+    var b=document.createElement("button");
+    b.type="button";b.className="csy-chip";
+    b.innerHTML=token
+      ?("☁ "+user+"<span class='csy-hint' style='color:var(--g1)'> · 点击同步</span>")
+      :"☁ 登录云同步";
+    b.onclick=function(){token?syncNow():openModal()};
+    return b;
+  };
+  var sp=document.querySelector(".sideprog");
+  if(sp)sp.parentNode.insertBefore(mk(),sp);
+  var tb=document.querySelector(".topbar");
+  if(tb){var c=mk();c.classList.add("tb");tb.insertBefore(c,$("menubtn"))}
+}
+function openModal(text){msg.textContent=text||"";modal.classList.add("open");setTimeout(function(){$("csyUser").focus()},60)}
+function closeModal(){modal.classList.remove("open")}
+$("csyX").onclick=closeModal;
+modal.addEventListener("click",function(e){if(e.target===modal)closeModal()});
+addEventListener("keydown",function(e){if(e.key==="Escape")closeModal()});
+
+/* ---- API ---- */
+async function api(path,body,method){
+  var opt={method:method||(body?"POST":"GET"),headers:{}};
+  if(body){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
+  if(token)opt.headers["Authorization"]="Bearer "+token;
+  var r=await fetch("/api"+path,opt);
+  if(r.status===401){
+    token="";localStorage.removeItem("cs-token");chip();
+    openModal("登录已过期,请重新登录");
+    throw new Error("401");
+  }
+  var j=await r.json().catch(function(){return{}});
+  if(!r.ok)throw new Error(typeof j.detail==="string"?j.detail:"HTTP "+r.status);
+  return j;
+}
+function authed(u,t){
+  user=u;token=t;
+  localStorage.setItem("cs-user",u);localStorage.setItem("cs-token",t);
+  chip();closeModal();syncNow();
+}
+$("csyLogin").onclick=async function(){
+  try{
+    var j=await api("/auth/login",{username:$("csyUser").value.trim(),password:$("csyPass").value});
+    authed(j.username,j.access_token);
+  }catch(e){msg.textContent="✕ "+e.message}
+};
+$("csyReg").onclick=async function(){
+  try{
+    var j=await api("/auth/register",{username:$("csyUser").value.trim(),password:$("csyPass").value});
+    authed(j.username,j.access_token);
+  }catch(e){msg.textContent="✕ "+e.message}
+};
+
+/* ---- 合并策略:每个勾选项按 updated_at 新者胜 ---- */
+function merge(serverItems){
+  var local=window.CSPATH.snapshot(),push=[];
+  serverItems.forEach(function(it){
+    var lts=tsMap[it.checkbox_id]||0;
+    if((it.updated_at||0)>=lts)CSPATH.apply(it.checkbox_id,it.done);
+  });
+  Object.keys(local).forEach(function(id){
+    var lts=tsMap[id]||0,mine=null;
+    serverItems.forEach(function(x){if(x.checkbox_id===id)mine=x});
+    if(!mine){if(local[id])push.push({checkbox_id:id,done:local[id],updated_at:lts||Date.now()})}
+    else if(lts>mine.updated_at)push.push({checkbox_id:id,done:local[id],updated_at:lts});
+  });
+  return push;
+}
+async function syncNow(){
+  if(!token||syncing)return;
+  syncing=true;
+  try{
+    var j=await api("/progress");
+    var push=merge(j.items||[]);
+    if(push.length)await api("/progress",{items:push},"PUT");
+    document.querySelectorAll(".csy-chip").forEach(function(x){
+      var h=x.querySelector(".csy-hint");
+      if(h)h.textContent=" · "+fmt(Date.now())+" 已同步";
+    });
+  }catch(e){}
+  syncing=false;
+}
+window.CSPATH._onToggle=function(id,on){
+  tsMap[id]=Date.now();
+  try{localStorage.setItem("cs-ts",JSON.stringify(tsMap))}catch(e){}
+  pend[id]={checkbox_id:id,done:on,updated_at:tsMap[id]};
+  clearTimeout(pendTimer);
+  pendTimer=setTimeout(async function(){
+    var items=Object.keys(pend).map(function(k){return pend[k]});
+    pend={};
+    if(token&&items.length){try{await api("/progress",{items:items},"PUT")}catch(e){}}
+  },1200);
+};
+if(token)syncNow();
+chip();
+})();
+</script>

@@ -413,7 +413,8 @@ cks.forEach(function(b){
     var on=b.getAttribute('aria-checked')==='true';
     b.setAttribute('aria-checked',on?'false':'true');
     if(on)done.delete(id);else done.add(id);
-    try{localStorage.setItem(KEY,JSON.stringify([...done]))}catch(e){}
+    try{localStorage.setItem(KEY,JSON.stringify(Array.from(done)))}catch(e){}
+    if(window.CSPATH&&CSPATH._onToggle){try{CSPATH._onToggle(id,!on)}catch(e){}}
     updateProgress();
   });
 });
@@ -492,7 +493,24 @@ if(!RM){
     });
   },{passive:true});
 }
+/* ---------- 供云同步模块调用的桥(静态版为空操作) ---------- */
+window.CSPATH={
+  snapshot:function(){var o={};cks.forEach(function(b){o[b.getAttribute('data-ck')]=b.getAttribute('aria-checked')==='true'});return o;},
+  apply:function(id,on){
+    var b=null;cks.forEach(function(x){if(x.getAttribute('data-ck')===id)b=x;});
+    if(!b)return false;
+    var cur=b.getAttribute('aria-checked')==='true';
+    if(cur!==on){
+      b.setAttribute('aria-checked',on?'true':'false');
+      if(on)done.add(id);else done.delete(id);
+      try{localStorage.setItem(KEY,JSON.stringify(Array.from(done)))}catch(e){}
+    }
+    return true;
+  },
+  refresh:function(){updateProgress();}
+};
 })();
 </script>
+<!--SYNC-->
 </body>
 </html>

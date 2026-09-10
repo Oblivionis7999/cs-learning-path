@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """把《计科学习路径_完整版.md》构建成单文件网页 index.html"""
-import re, html, pathlib
+import re, html, pathlib, sys
+
+args = sys.argv[1:]
+SYNC = "--sync" in args
+OUTP = args[args.index("--out") + 1] if "--out" in args else None
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -304,7 +308,14 @@ out = (TPL.replace("<!--NAV-->", nav)
           .replace("<!--CONTENT-->", content_html)
           .replace("<!--FOOTER-->", footer))
 
-dest = ROOT / "index.html"
+if SYNC:
+    sn = HERE / "sync_snippet.html"
+    out = out.replace("<!--SYNC-->", sn.read_text(encoding="utf-8") if sn.exists() else "")
+else:
+    out = out.replace("<!--SYNC-->", "")
+
+dest = pathlib.Path(OUTP) if OUTP else ROOT / "index.html"
+dest.parent.mkdir(parents=True, exist_ok=True)
 dest.write_text(out, encoding="utf-8")
-print(f"OK -> {dest}")
+print(f"OK -> {dest}{'  [sync]' if SYNC else ''}")
 print(f"sections={len(sections)}  checkboxes={CK[0]}  size={dest.stat().st_size:,} bytes")
