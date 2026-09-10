@@ -39,7 +39,7 @@
     <button class="csy-close" id="csyX" aria-label="关闭">✕</button>
     <h3>云同步</h3>
     <p class="csy-en">CLOUD SYNC</p>
-    <input id="csyUser" placeholder="用户名(3-24 位)" maxlength="24" autocomplete="username">
+    <input id="csyUser" placeholder="用户名(2-24 位)" maxlength="24" autocomplete="username">
     <input id="csyPass" type="password" placeholder="密码(至少 8 位)" maxlength="72" autocomplete="current-password">
     <div class="csy-row">
       <button class="csy-btn" id="csyLogin">登录</button>
@@ -103,13 +103,24 @@ function authed(u,t){
   localStorage.setItem("cs-user",u);localStorage.setItem("cs-token",t);
   chip();closeModal();syncNow();
 }
+function checkForm(){
+  var u=$("csyUser").value.trim(),p=$("csyPass").value;
+  if(!/^[A-Za-z0-9_一-鿿]{2,24}$/.test(u)){
+    msg.textContent="✕ 用户名需 2-24 位:仅限中文、字母、数字、下划线";return false;
+  }
+  if(p.length<8){msg.textContent="✕ 密码至少 8 位";return false}
+  msg.textContent="";
+  return true;
+}
 $("csyLogin").onclick=async function(){
+  if(!checkForm())return;
   try{
     var j=await api("/auth/login",{username:$("csyUser").value.trim(),password:$("csyPass").value});
     authed(j.username,j.access_token);
   }catch(e){msg.textContent="✕ "+e.message}
 };
 $("csyReg").onclick=async function(){
+  if(!checkForm())return;
   try{
     var j=await api("/auth/register",{username:$("csyUser").value.trim(),password:$("csyPass").value});
     authed(j.username,j.access_token);
