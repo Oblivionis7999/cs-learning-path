@@ -64,7 +64,7 @@ def blocks(lines):
             if head:
                 t += "<thead><tr>" + "".join(f"<th>{inline(c)}</th>" for c in head) + "</tr></thead>"
             t += "<tbody>" + "".join("<tr>" + "".join(f"<td>{inline(c)}</td>" for c in r) + "</tr>" for r in body) + "</tbody></table>"
-            out.append(t); continue
+            out.append('<div class="tscroll">' + t + '</div>'); continue
         m = re.match(r"^- \[( |x)\] (.*)", line)          # 复选框列表
         if m:
             items = []
