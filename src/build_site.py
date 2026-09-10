@@ -194,7 +194,7 @@ nav = "".join(f'<a href="#{i}"><span class="n">{n}</span>{z}</a>' for i, n, z in
 # ---------------- 生成正文 ----------------
 def header(num, zh, en):
     return (f'<header class="shead"><div class="snum">{num}</div>'
-            f'<div class="stitle"><h2>{html.escape(zh)}</h2><p class="en">{en}</p></div>'
+            f'<div class="stitle"><h2>{html.escape(zh)}</h2></div>'
             f'<div class="sline"></div></header>')
 
 parts, di = [], 0
@@ -211,11 +211,6 @@ for title, body in sections:
     deco = DECO[di % len(DECO)]; di += 1
     parts.append(f'<section class="sec" id="{sid}" data-deco="{deco}">'
                  f'{header(num, zh, EN.get(sid, ""))}<div class="sbody">{content}</div></section>')
-    if sid == "sec-10":  # 底座完工 → 附录之间插一条跑马灯
-        parts.append('<div class="marquee" aria-hidden="true"><div class="mq">'
-                     '<span>里程碑自测总表 — 全部打勾 = 底座完工<b>✦</b>PROJECTS → GITHUB<i>→</i>复试讲稿 = README<b>✦</b></span>'
-                     '<span>里程碑自测总表 — 全部打勾 = 底座完工<b>✦</b>PROJECTS → GITHUB<i>→</i>复试讲稿 = README<b>✦</b></span>'
-                     '</div></div>')
 
 content_html = "".join(parts)
 
@@ -269,32 +264,24 @@ hero = """
   <svg class="tw" style="right:32%;bottom:18%;animation-delay:2.1s" width="20" height="20" viewBox="-13 -13 26 26" aria-hidden="true">
     <path d="M0-12 L2.6-2.6 L12 0 L2.6 2.6 L0 12 L-2.6 2.6 L-12 0 L-2.6-2.6 Z" fill="#e5352b"/></svg>
 
-  <p class="kicker">Complete Learning Path — V2.0 · 2026 · 考研深造路线</p>
+  <p class="kicker">V2.0 · 2026 · 考研深造路线</p>
   <h1 class="display">
-    <span class="row"><i class="ghost" aria-hidden="true">COMPUTER</i><span class="t-blue">COMPUTER</span></span>
+    <span class="row"><span class="t-blue">COMPUTER</span></span>
     <span class="row"><span class="t-line">SCIENCE</span><span class="zh">完整学习路径</span></span>
-    <span class="refl" aria-hidden="true">COMPUTER SCIENCE</span>
   </h1>
   <p class="sub">复合型<span class="dot">·</span>抗替代<span class="dot">·</span>可长期进化 — <b>C++ 首发,考研回收</b></p>
   <div class="cta">
     <a class="btn" href="#sec-0">进入路径</a>
-    <span class="hint">PROGRESS SAVED LOCALLY<br>打勾进度自动保存在本机浏览器</span>
+    <span class="hint">打勾进度自动保存在本机浏览器</span>
   </div>
-  <div class="scrolldown">SCROLL</div>
 </section>
-<div class="marquee" aria-hidden="true"><div class="mq">
-  <span>理解 + 动手才算学过<b>✦</b>YOU CAN'T LEARN BY WATCHING<i>→</i>达标就翻篇,不达标不硬走<b>✦</b>DON'T HOARD COURSES<i>→</i>别囤课 — 收藏夹不是学习路径<b>✦</b>代码必须亲手敲<b>✦</b>TYPE IT YOURSELF<i>→</i></span>
-  <span>理解 + 动手才算学过<b>✦</b>YOU CAN'T LEARN BY WATCHING<i>→</i>达标就翻篇,不达标不硬走<b>✦</b>DON'T HOARD COURSES<i>→</i>别囤课 — 收藏夹不是学习路径<b>✦</b>代码必须亲手敲<b>✦</b>TYPE IT YOURSELF<i>→</i></span>
-</div></div>
 """
 
 footer = """
 <footer class="foot">
-  <div class="fin" aria-hidden="true">FIN</div>
-  <div class="fin-refl" aria-hidden="true">FIN</div>
   <p class="fp">本页由《计科学习路径_完整版.md》v2.0 构建生成 · 单文件离线可用<br>
   进度数据仅存储于本机浏览器(localStorage)· 资源以官方平台为准</p>
-  <a href="#top">BACK TO TOP ↑</a>
+  <a href="#top">回到顶部 ↑</a>
 </footer>
 """
 

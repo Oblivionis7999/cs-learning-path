@@ -272,7 +272,7 @@ ol.cblist .ck::before{counter-reset:none;counter-increment:none;content:counter(
 .code code{background:none;padding:0;color:inherit;font:inherit}
 /* 引用块 */
 .quote{border:1px solid var(--ink);background:linear-gradient(rgba(247,246,242,.92),rgba(247,246,242,.92)),repeating-linear-gradient(45deg,rgba(16,16,20,.08) 0 8px,transparent 8px 16px);padding:20px 24px;margin:20px 0;position:relative}
-.quote::before{content:"MANIFESTO";position:absolute;top:-9px;left:14px;background:var(--bg);padding:0 10px;font:700 .62rem/1.5 var(--mono);letter-spacing:.34em;color:var(--blue-d)}
+.quote::before{display:none}
 .quote p{margin:4px 0;font-size:.95rem}
 .quote li{list-style:none;padding:3px 0 3px 22px;position:relative;font-size:.95rem}
 .quote li::before{content:"✦";position:absolute;left:0;top:4px;font-size:.7rem;color:var(--blue)}
@@ -369,7 +369,7 @@ ol.cblist .ck::before{counter-reset:none;counter-increment:none;content:counter(
 
 <aside class="sidenav">
   <div class="brand">CS<b>·</b>PATH</div>
-  <div class="brand-sub">COMPLETE LEARNING PATH<br>V2.0 — 2026</div>
+  <div class="brand-sub">V2.0 — 2026</div>
   <nav id="nav"><!--NAV--></nav>
   <div class="sideprog">
     <div>PROGRESS — <span id="spdone">0%</span></div>
@@ -443,7 +443,7 @@ if(dnav){
   dnav.innerHTML=document.getElementById('nav').innerHTML;
   var foot=document.createElement('div');
   foot.className='dw-foot';
-  foot.innerHTML='COMPLETE LEARNING PATH<br>V2.0 — 2026 · 258 项打勾清单';
+  foot.innerHTML='V2.0 — 2026 · 258 项打勾清单';
   dnav.appendChild(foot);
 }
 function setDrawer(open){
